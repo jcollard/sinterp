@@ -1,1 +1,0 @@
-let add1 = (\m -> m + 1) in add1 (add1 0)
