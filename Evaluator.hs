@@ -98,9 +98,9 @@ eval' env e =
     (Mul !es) -> evalNum eval'' mul es
     (Div !es) -> evalNum eval'' div es
     (If !cond !t_exp !f_exp) ->
-      case (toBool . eval $ cond) of
-        True -> eval t_exp
-        False -> eval f_exp
+      case (toBool . eval'' $ cond) of
+        True -> eval'' t_exp
+        False -> eval'' f_exp
     (Cmp cmp e0 e1) -> 
       let !eval'' = toNumeric . (eval' env) in
       BooleanV (compareNum cmp (eval'' e0) (eval'' e1))
@@ -113,9 +113,9 @@ eval' env e =
         Nothing -> error ("Unbound identifier " ++ x ++ " encountered.")
     (Fun !x !body) -> FunV x body env
     (Apply !func !arg) ->
-      case (eval' env func) of
+      case (eval'' func) of
         FunV !x !body !f_env -> 
-          let !x_env = extend (x, eval' f_env arg) f_env in
+          let !x_env = extend (x, eval'' arg) f_env in
           eval' x_env body
         _ -> error "Could not apply non-function value."
     Empty -> ListV []

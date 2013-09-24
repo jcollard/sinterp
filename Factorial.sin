@@ -1,0 +1,10 @@
+let make = 
+ \self -> \n -> 
+   if n == 0 
+      then 1 
+      else n * self self (n - 1) in
+
+let fac = \n -> make make n in 
+
+fac 5
+

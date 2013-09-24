@@ -1,0 +1,8 @@
+let make =
+  \self -> \ls -> \n -> if (isEmpty ls) 
+      	       	        then n
+			else self self (tail ls) (n + 1) in
+
+let len = \ls -> make make ls 0 in 
+
+let ls = 1:2:3:4:5:[] in len ls
