@@ -1,0 +1,2 @@
+let fn = \x -> \y -> x + y in
+let fn2 = \n -> fn n n in fn2 5
