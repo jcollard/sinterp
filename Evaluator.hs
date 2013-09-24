@@ -4,7 +4,7 @@ module Evaluator(eval) where
 
 import Prelude hiding(div, EQ, LT, GT)
 import qualified Prelude as Prelude
-import Sinterp
+import SinterpCore
 
 class LangNum a where
   add :: a -> a -> a

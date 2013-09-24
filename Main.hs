@@ -33,7 +33,7 @@ run input = do
   case parsed of
       Left err -> putStrLn err
       Right expr -> 
-        catch (let eval' = eval expr in putStrLn . pretty $ eval') ((\msg -> putStrLn (show msg)) :: Control.Exception.SomeException -> IO ())    
+        catch (let eval' = eval . desugar $ expr in putStrLn . pretty $ eval') ((\msg -> putStrLn (show msg)) :: Control.Exception.SomeException -> IO ())    
       
 repl = do
   putStrLn "Ctrl-C to exit"
