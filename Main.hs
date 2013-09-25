@@ -1,13 +1,13 @@
-import System.Environment
-import System.IO
-import Control.Monad
-import Control.Exception
+module Main(main) where
 
-import Prelude hiding(catch)
 import Sinterp
 import Evaluator
 import Parser
-import Data.List
+
+import Control.Exception
+import Control.Monad
+import System.Environment
+import System.IO
 
 class Pretty a where
   pretty :: a -> String
@@ -16,8 +16,14 @@ instance Pretty Value where
   pretty (NumberV n) = pretty n
   pretty (BooleanV b) = show b
   pretty (FunV _ _ _) = "<function>"
-  pretty (ConsV head tail) = (pretty head) ++ ":" ++ (pretty tail)
+--  pretty (ConsV head tail) = (pretty head) ++ ":" ++ (pretty tail)
+  pretty v@(ConsV head tail) = "[" ++ (pretty head) ++ (pretty' tail)
   pretty EmptyV = "[]"
+
+pretty' :: Value -> String
+pretty' (ConsV head tail) = "," ++ (pretty' head) ++ (pretty' tail)
+pretty' EmptyV = "]"
+pretty' v = pretty v
   
 instance Pretty Numeric where  
   pretty (IntN n) = show n
