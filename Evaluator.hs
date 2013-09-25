@@ -58,10 +58,6 @@ toBool :: Value -> Bool
 toBool (BooleanV b) = b
 toBool _ = error "Could not convert non-BooleanV Value to Bool"
 
-toList :: Value -> [Value]
-toList (ListV xs) = xs
-toList _ = error "Could not convert non-ListV Value to [Value]"
-
 evalOp :: (Value -> a) -> (a -> Value) -> (Expr -> Value) -> (a -> a -> a) -> (Expr, Expr) -> Value
 evalOp coerce constructor eval op (e0, e1) = 
   let eval' = coerce . eval in
@@ -79,13 +75,20 @@ extend :: (Identifier, Value) -> Environment -> Environment
 extend i@(_, NumberV !n) is = i:is
 extend i@(_, BooleanV !b) is = i:is
 extend i@(_, FunV !id !exp !env) is = i:is
-extend i@(_, ListV !xs) is = i:is
+extend i@(_, ConsV !head !tail) is =
+  let !tl = extend' head tail in i:tl where
+  extend' (NumberV !n) EmptyV = is
+  extend' (BooleanV !b) EmptyV = is
+  extend' (FunV !id !exp !env) EmptyV = is
+  extend' (NumberV !n) (ConsV !head !tail) = extend' head tail
+  extend' (BooleanV !b) (ConsV !head !tail) = extend' head tail
+  extend' (FunV !id !exp !env) (ConsV !head !tail) = extend' head tail
 
 eval :: Expr -> Value
 eval = eval' []
 
 eval' :: Environment -> Expr -> Value
-eval' env e = 
+eval' !env !e = 
   let eval'' = eval' env in
   case e of
     (Number !n) -> NumberV n
@@ -118,8 +121,21 @@ eval' env e =
           let !x_env = extend (x, eval'' arg) f_env in
           eval' x_env body
         _ -> error "Could not apply non-function value."
-    Empty -> ListV []
-    Cons !e0 !e1 -> ListV $ (eval'' e0):(toList . eval'' $ e1)
-    Head !e -> head . toList . eval'' $ e
-    Tail !e -> ListV $ tail . toList . eval'' $ e
-    IsEmpty !e -> BooleanV $ (ListV []) == (eval'' e)
+    Empty -> EmptyV
+    Cons !e0 !e1 ->
+      let !head = eval'' e0
+          !tail = eval'' e1
+          !list = ConsV head tail in
+      list
+    Head !e ->
+      case eval'' e of
+        ConsV !head !tail -> head
+        _ -> error "Could not take head of non-list"
+    Tail !e ->
+      case eval'' e of
+        ConsV !head !tail -> tail
+        _ -> error "Could not take tail of non-list"
+    IsEmpty !e ->
+      case eval'' e of
+           EmptyV -> BooleanV True
+           _ -> BooleanV False

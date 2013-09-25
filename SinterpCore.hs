@@ -25,7 +25,8 @@ data Numeric = IntN Integer
 data Value = NumberV Numeric
            | BooleanV Bool
            | FunV Identifier Expr Environment
-           | ListV [Value]
+           | ConsV Value Value
+           | EmptyV
                deriving (Show, Eq)  
 
 data Expr = Number Numeric

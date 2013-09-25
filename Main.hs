@@ -1,4 +1,5 @@
 import System.Environment
+import System.IO
 import Control.Monad
 import Control.Exception
 
@@ -15,7 +16,8 @@ instance Pretty Value where
   pretty (NumberV n) = pretty n
   pretty (BooleanV b) = show b
   pretty (FunV _ _ _) = "<function>"
-  pretty (ListV xs) = "[" ++ (intercalate "," (map pretty xs)) ++ "]"
+  pretty (ConsV head tail) = (pretty head) ++ ":" ++ (pretty tail)
+  pretty EmptyV = "[]"
   
 instance Pretty Numeric where  
   pretty (IntN n) = show n
@@ -39,5 +41,6 @@ repl = do
   putStrLn "Ctrl-C to exit"
   forever $ do
     putStr "> "
+    hFlush stdout
     getLine >>= run
     
