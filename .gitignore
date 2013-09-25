@@ -1,6 +1,7 @@
 ## Emacs Temp Files
 *.*~
 [#]*
+.*
 
 ## Compiled Haskell Object/Interface Files
 *.o

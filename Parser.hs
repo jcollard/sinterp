@@ -19,16 +19,17 @@ spaces1 = skipMany1 space
 expr :: Parser Expr
 expr = spaces >> (try apply <|> expr')  >>= precedent1 >>= precedent0
 
+
+expr' :: Parser Expr
+expr' = (try paren <|> term) >>= precedent0
+  where paren = do {spaces; char '('; e <- expr; char ')'; return e}
+
 apply :: Parser Expr
 apply = partialApply >>= partialApply'
  where partialApply = do {e0 <- expr'; spaces; return (Apply e0)}
        partialApply' part = (try recur <|> finalApply) where
          finalApply = do {en <- expr'; spaces; return (part en)}
          recur = do {en <- expr'; spaces;  partialApply' (Apply (part en))}
-
-expr' :: Parser Expr
-expr' = (try paren <|> term) >>= precedent0
-  where paren = do {spaces; char '('; e <- expr; char ')'; return e}
 
 value :: Parser Expr
 value = ((choice . map try $ expressions) <|> identifier) >>= precedent1
@@ -50,9 +51,9 @@ lt = operator "<" (Cmp LT) expr
 eq = operator "==" (Cmp EQ) expr
 
 precedent1 = precedent [mul, div, and]
-mul = operator "*" (curry Mul) value
-div = operator "/" (curry Div) value
-and = operator "and" (curry And) value
+mul = operator "*" (curry Mul) expr
+div = operator "/" (curry Div) expr
+and = operator "and" (curry And) expr
 
 
 operator :: String -> (Expr -> Expr -> Expr) -> (Parser Expr) -> Expr -> Parser Expr
