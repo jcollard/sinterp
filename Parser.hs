@@ -33,7 +33,7 @@ apply = partialApply >>= partialApply'
 
 value :: Parser Expr
 value = ((choice . map try $ expressions) <|> identifier) >>= precedent1
-  where expressions = [lambda, parseLet, parseIf, parseNot, parseEmpty, parseHead, parseTail, isEmpty, numeric, boolean]
+  where expressions = [list, lambda, parseLet, parseIf, parseNot, parseEmpty, parseHead, parseTail, isEmpty, numeric, boolean]
 
 term :: Parser Expr
 term = value >>= precedent1
@@ -61,6 +61,12 @@ operator op constructor nextExpr e0 = do
   string op <* spaces
   e1 <- nextExpr <* spaces
   return (constructor e0 e1)
+
+list = head >>= tail where
+  head = do {char '['; spaces; e <- expr; spaces; return (Cons e) }
+  tail part = try (more part) <|> end where
+    more part = do {char ','; spaces; e <- expr; spaces; tail (part . Cons e)}
+    end = do {char ']'; spaces; return (part Empty)}
   
 lambda = do 
   char '\\' <* spaces
