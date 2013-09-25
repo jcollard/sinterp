@@ -2,7 +2,7 @@ all: compile
 
 compile: sinterp
 
-sinterp: Main.hs
+sinterp: *.hs
 	ghc Main.hs -o sinterp
 
 clean: Main.o

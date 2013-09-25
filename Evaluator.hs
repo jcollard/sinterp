@@ -75,14 +75,17 @@ extend :: (Identifier, Value) -> Environment -> Environment
 extend i@(_, NumberV !n) is = i:is
 extend i@(_, BooleanV !b) is = i:is
 extend i@(_, FunV !id !exp !env) is = i:is
+extend i@(_, EmptyV) is = i:is
 extend i@(_, ConsV !head !tail) is =
   let !tl = extend' head tail in i:tl where
   extend' (NumberV !n) EmptyV = is
   extend' (BooleanV !b) EmptyV = is
   extend' (FunV !id !exp !env) EmptyV = is
+  extend' (ConsV !head !tail) EmptyV = is
   extend' (NumberV !n) (ConsV !head !tail) = extend' head tail
   extend' (BooleanV !b) (ConsV !head !tail) = extend' head tail
   extend' (FunV !id !exp !env) (ConsV !head !tail) = extend' head tail
+  extend' (ConsV !h !t) (ConsV !head !tail) = extend' head tail
 
 eval :: Expr -> Value
 eval = eval' []
