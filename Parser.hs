@@ -13,10 +13,9 @@ parse str = let parsed = P.parse expr "" str in
     Left err -> Left . show $ err
     Right expr -> Right expr
 
-
 spaces1 = skipMany1 space
 
-expr = spaces >> (try apply <|> expr')  >>= expr'''
+expr = spaces >> (try apply <|> expr')  >>= precedent1 >>= precedent0
 
 apply :: Parser Expr
 apply = partialApply >>= partialApply'
@@ -26,34 +25,44 @@ apply = partialApply >>= partialApply'
          recur = do {en <- expr'; spaces;  partialApply' (Apply (part en))}
 
 expr' :: Parser Expr
-expr' = (try paren <|> expr'')
+expr' = (try paren <|> term) >>= precedent0
   where paren = do {spaces; char '('; e <- expr; char ')'; return e}
 
 expr'' :: Parser Expr
 expr'' = (choice . map try $ expressions) <|> identifier
   where expressions = [lambda, parseLet, parseIf, parseNot, parseEmpty, parseHead, parseTail, isEmpty, numeric, boolean]
 
-expr''' :: Expr -> Parser Expr
-expr''' e = (choice . map try $ (operators <*> [e])) <|> return e
-  where operators = [add, sub, mul, div, and, or, cons, gt, lt, eq]
+value :: Parser Expr
+value = ((choice . map try $ expressions) <|> identifier) >>= precedent1
+  where expressions = [lambda, parseLet, parseIf, parseNot, parseEmpty, parseHead, parseTail, isEmpty, numeric, boolean]
 
-operator :: String -> (Expr -> Expr -> Expr) -> Expr -> Parser Expr
-operator op constructor e0 = do 
+term :: Parser Expr
+term = value >>= precedent1
+
+precedent :: [Expr -> Parser Expr] -> Expr -> Parser Expr
+precedent operators e = (choice . map try $ (operators <*> [e])) <|> return e
+
+precedent0 = precedent [add, sub, or, gt, lt, eq, cons]
+add = operator "+" (curry Add) expr
+sub = operator "-" (curry Sub) expr
+or = operator "or" (curry Or) expr
+cons = operator ":" Cons expr
+gt = operator ">" (Cmp GT) expr
+lt = operator "<" (Cmp LT) expr
+eq = operator "==" (Cmp EQ) expr
+
+
+precedent1 = precedent [mul, div, and]
+mul = operator "*" (curry Mul) value
+div = operator "/" (curry Div) value
+and = operator "and" (curry And) value
+
+
+operator :: String -> (Expr -> Expr -> Expr) -> (Parser Expr) -> Expr -> Parser Expr
+operator op constructor nextExpr e0 = do 
   string op <* spaces
-  e1 <- expr <* spaces
+  e1 <- nextExpr <* spaces
   return (constructor e0 e1)
-
-add = operator "+" (curry Add)
-sub = operator "-" (curry Sub)
-mul = operator "*" (curry Mul)
-div = operator "/" (curry Div)
-and = operator "and" (curry And)
-or = operator "or" (curry Or)
-cons = operator ":" Cons
-gt = operator ">" (Cmp GT)
-lt = operator "<" (Cmp LT)
-eq = operator "==" (Cmp EQ)
-
   
 lambda = do 
   char '\\' <* spaces
