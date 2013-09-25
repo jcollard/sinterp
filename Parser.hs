@@ -11,10 +11,12 @@ parse :: String -> Either String Expr
 parse str = let parsed = P.parse expr "" str in
   case parsed of
     Left err -> Left . show $ err
-    Right expr -> Right expr
+    Right e -> Right e
 
+spaces1 :: Parser ()
 spaces1 = skipMany1 space
 
+expr :: Parser Expr
 expr = spaces >> (try apply <|> expr')  >>= precedent1 >>= precedent0
 
 apply :: Parser Expr
@@ -27,10 +29,6 @@ apply = partialApply >>= partialApply'
 expr' :: Parser Expr
 expr' = (try paren <|> term) >>= precedent0
   where paren = do {spaces; char '('; e <- expr; char ')'; return e}
-
-expr'' :: Parser Expr
-expr'' = (choice . map try $ expressions) <|> identifier
-  where expressions = [lambda, parseLet, parseIf, parseNot, parseEmpty, parseHead, parseTail, isEmpty, numeric, boolean]
 
 value :: Parser Expr
 value = ((choice . map try $ expressions) <|> identifier) >>= precedent1
@@ -50,7 +48,6 @@ cons = operator ":" Cons expr
 gt = operator ">" (Cmp GT) expr
 lt = operator "<" (Cmp LT) expr
 eq = operator "==" (Cmp EQ) expr
-
 
 precedent1 = precedent [mul, div, and]
 mul = operator "*" (curry Mul) value
